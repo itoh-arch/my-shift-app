@@ -9,17 +9,17 @@ import {
 } from 'lucide-react';
 
 // --- Firebase Configuration ---
-// 【重要】Vercelなどで公開する際は、Firebaseコンソールから取得した実際の設定に書き換えてください。
+// ご提示いただいた設定を反映しました
 let firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAZ1DljhSsHe87xYGq7mtMz2ZPsBuz3wYk",
+  authDomain: "shift-manager-app-126d2.firebaseapp.com",
+  projectId: "shift-manager-app-126d2",
+  storageBucket: "shift-manager-app-126d2.firebasestorage.app",
+  messagingSenderId: "10042553386",
+  appId: "1:10042553386:web:af0c32658646c453ff3f53"
 };
 
-// Sandbox環境と本番環境の共存ロジック
+// Sandbox環境（チャット上のプレビュー）で動かすための共存ロジック
 const getSandboxConfig = () => {
   if (typeof window !== 'undefined' && window.__firebase_config) {
     try {
@@ -49,10 +49,11 @@ try {
   console.error("Firebase initialization failed:", e);
 }
 
-// appIdの定義（スラッシュが含まれる場合のセグメント数エラー対策）
+// appIdの定義（スラッシュが含まれる場合のセグメント数エラー/偶数エラー対策）
 const getAppId = () => {
   const sid = (typeof window !== 'undefined' && window.__app_id) ? window.__app_id : 'shift-flow-production-v1';
-  return sid.replace(/\//g, '_'); // スラッシュをアンダースコアに変換
+  // スラッシュをアンダースコアに置換して、パスの階層数が変わらないように固定します
+  return sid.replace(/\//g, '_');
 };
 const appId = getAppId();
 
@@ -99,7 +100,7 @@ export default function App() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTaskInput, setNewTaskInput] = useState("");
 
-  // 1. 認証フロー (匿名ログインまたはトークンログイン)
+  // 1. 認証フロー (匿名ログイン)
   useEffect(() => {
     if (!auth) {
       setConfigError(true);
@@ -145,7 +146,7 @@ export default function App() {
       if (err.code === 'permission-denied') setPermissionError(true);
     };
 
-    // odd number segments 構成のコレクションパス
+    // Firebaseパス設定 (Rule 1遵守)
     const authColl = collection(db, 'artifacts', appId, 'public', 'data', 'auth');
     const availColl = collection(db, 'artifacts', appId, 'public', 'data', 'availability');
     const assignColl = collection(db, 'artifacts', appId, 'public', 'data', 'assignments');
@@ -181,7 +182,7 @@ export default function App() {
     return () => { unsubPass(); unsubAvail(); unsubAssign(); unsubTasks(); };
   }, [user, currentMonth, selectedTask]);
 
-  // --- Functions ---
+  // --- Handlers ---
   const changeMonth = (offset) => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
   const getTaskColor = (name) => TASK_COLORS[tasks.indexOf(name) % TASK_COLORS.length] || 'bg-gray-400';
   const getCellKey = (sid, d) => `${sid}-${d}`;
@@ -243,13 +244,13 @@ export default function App() {
     setIsDragging(false); setDragStart(null); setDragCurrent(null);
   };
 
-  // --- Error & Auth Views ---
+  // --- Views ---
   if (configError) return (
     <div className="flex items-center justify-center h-screen bg-slate-900 p-6 text-center text-slate-900 font-sans">
       <div className="bg-white p-10 rounded-[3rem] shadow-2xl max-w-lg">
         <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-6" />
         <h2 className="text-xl font-black mb-4">Firebase設定エラー</h2>
-        <p className="text-slate-500 mb-8 font-bold text-sm">`firebaseConfig` の値が有効ではありません。Firebaseコンソールから取得した実際の設定値を貼り付けてください。</p>
+        <p className="text-slate-500 mb-8 font-bold text-sm">`firebaseConfig` の値が有効ではありません。コピーミスがないか確認してください。</p>
         <button onClick={() => window.location.reload()} className="w-full py-4 bg-slate-100 text-slate-600 font-black rounded-2xl">再読み込み</button>
       </div>
     </div>
@@ -260,7 +261,7 @@ export default function App() {
       <div className="bg-white p-10 rounded-[3rem] shadow-2xl max-w-lg">
         <ShieldAlert className="w-16 h-16 text-rose-500 mx-auto mb-6" />
         <h2 className="text-xl font-black mb-4">権限エラー</h2>
-        <p className="text-slate-500 mb-8 font-bold text-sm">Firebaseコンソールの[ルール]タブの設定を完了させ、「公開」ボタンを必ず押してください。</p>
+        <p className="text-slate-500 mb-8 font-bold text-sm">Firebaseコンソールの[ルール]タブの設定を公開してください。</p>
         <button onClick={() => window.location.reload()} className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl">再読み込み</button>
       </div>
     </div>
@@ -274,7 +275,7 @@ export default function App() {
             <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl text-slate-900">
               <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
               <h3 className="text-xl font-black mb-2">初期化確認</h3>
-              <p className="text-sm font-bold text-slate-500 mb-8">現在の設定を消去して新しく設定し直しますか？</p>
+              <p className="text-sm font-bold text-slate-500 mb-8">パスワード設定を消去して新しく設定し直しますか？</p>
               <div className="flex gap-3"><button onClick={() => setShowResetConfirm(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold">いいえ</button><button onClick={handleResetPasswordAction} className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-bold">はい</button></div>
             </div>
           </div>
@@ -286,12 +287,12 @@ export default function App() {
             <form onSubmit={handleLoginSubmit}>
               <div className="text-center mb-10"><div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"><Calendar className="text-white" size={32} /></div><h1 className="text-2xl font-black text-slate-900">ShiftFlow Pro</h1></div>
               <div className="space-y-4">
-                <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="text" placeholder="ID (staff-1等)" value={inputAccountId} disabled={authStep !== 'login'} onChange={(e) => setInputAccountId(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-indigo-600 outline-none font-bold text-slate-900" /></div>
-                {authStep !== 'login' && <div className="relative animate-in slide-in-from-top-2 duration-300"><Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="password" autoFocus placeholder={authStep === 'setup' ? "新パスワード" : "パスワード"} value={inputPassword} onChange={(e) => setInputPassword(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-indigo-600 outline-none font-bold text-slate-900" /></div>}
+                <div className="relative text-slate-800"><User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="text" placeholder="ID (staff-1等)" value={inputAccountId} disabled={authStep !== 'login'} onChange={(e) => setInputAccountId(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-indigo-600 outline-none font-bold text-slate-900" /></div>
+                {authStep !== 'login' && <div className="relative animate-in slide-in-from-top-2 duration-300 text-slate-800"><Key className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20}/><input type="password" autoFocus placeholder={authStep === 'setup' ? "新パスワード" : "パスワード"} value={inputPassword} onChange={(e) => setInputPassword(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-indigo-600 outline-none font-bold text-slate-900" /></div>}
               </div>
               {errorMessage && <div className="mt-4 text-rose-500 text-[10px] font-black flex items-center gap-1"><AlertTriangle size={12}/>{errorMessage}</div>}
               <button type="submit" className="w-full py-5 rounded-2xl bg-indigo-600 text-white font-black mt-8 hover:bg-indigo-700 shadow-xl transition-all">ログイン</button>
-              {authStep === 'challenge' && <button type="button" onClick={() => setShowResetConfirm(true)} className="w-full py-3 text-slate-400 font-bold text-[10px] mt-2 flex items-center justify-center gap-1 hover:text-rose-500 transition-colors uppercase tracking-widest"><RefreshCw size={12}/>初期化</button>}
+              {authStep === 'challenge' && <button type="button" onClick={() => setShowResetConfirm(true)} className="w-full py-3 text-slate-400 font-bold text-[10px] mt-2 flex items-center justify-center gap-1 hover:text-rose-500 uppercase tracking-widest"><RefreshCw size={12}/>パスワード初期化</button>}
             </form>
           )}
         </div>
@@ -306,30 +307,31 @@ export default function App() {
           <div className="bg-indigo-600 p-2 rounded-xl shadow-md"><Calendar className="text-white" size={20} /></div>
           <div><h1 className="text-lg font-black leading-none text-slate-900">ShiftFlow Pro</h1><div className="flex items-center gap-2 mt-1"><span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">{userRole}</span><div className="flex items-center gap-2 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200 text-slate-600"><button onClick={() => changeMonth(-1)}><ChevronLeft size={14}/></button><span className="text-[10px] font-black min-w-[70px] text-center">{currentMonth.getFullYear()}年 {currentMonth.getMonth()+1}月</span><button onClick={() => changeMonth(1)}><ChevronRight size={14}/></button></div></div></div>
         </div>
-        <div className="flex items-center gap-4"><div className="px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3 shadow-sm"><div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shadow-sm ${userRole === 'manager' ? 'bg-slate-800 text-white' : 'bg-emerald-500 text-white'}`}>{currentUserProfile.name[0]}</div><span className="text-sm font-black text-slate-800">{currentUserProfile.name}</span></div><button onClick={() => window.location.reload()} className="p-2 text-slate-300 hover:text-rose-500 transition-all"><LogOut size={22} /></button></div>
+        <div className="flex items-center gap-4 text-slate-800"><div className="px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3 shadow-sm"><div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shadow-sm ${userRole === 'manager' ? 'bg-slate-800 text-white' : 'bg-emerald-500 text-white'}`}>{currentUserProfile.name[0]}</div><span className="text-sm font-black text-slate-800">{currentUserProfile.name}</span></div><button onClick={() => window.location.reload()} className="p-2 text-slate-300 hover:text-rose-500 transition-all"><LogOut size={22} /></button></div>
       </header>
 
       <main className="flex-1 flex overflow-hidden text-slate-800">
         {userRole === 'manager' && (
           <aside className="w-72 bg-white border-r p-6 flex flex-col gap-8 shrink-0 shadow-lg z-20 overflow-y-auto">
-            <div className="flex items-center justify-between font-black text-slate-400"><h2 className="text-[10px] uppercase tracking-widest">業務選択</h2><button onClick={() => setShowAddTask(!showAddTask)} className="text-slate-400 hover:text-indigo-600 transition-colors"><Plus size={18}/></button></div>
-            {showAddTask && (<div className="p-4 bg-indigo-50 rounded-2xl border-2 border-indigo-100 mb-4 animate-in slide-in-from-top-2"><input autoFocus type="text" placeholder="業務名..." value={newTaskInput} onChange={(e) => setNewTaskInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (async () => { if(!newTaskInput.trim()) return; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tasks'), { list: [...tasks, newTaskInput.trim()] }); setNewTaskInput(""); setShowAddTask(false); })()} className="w-full p-3 rounded-xl border-none outline-none text-xs font-bold mb-3 shadow-inner text-slate-900" /><div className="flex gap-2"><button onClick={() => setShowAddTask(false)} className="flex-1 text-[10px] font-black text-slate-400">閉じる</button><button onClick={async () => { if(!newTaskInput.trim()) return; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tasks'), { list: [...tasks, newTaskInput.trim()] }); setNewTaskInput(""); setShowAddTask(false); }} className="flex-[2] py-2 bg-indigo-600 text-white text-[10px] rounded-lg font-bold">追加</button></div></div>)}
-            <div className="space-y-2">{tasks.map(t => (<button key={t} onClick={() => setSelectedTask(t)} className={`w-full flex items-center justify-between p-4 rounded-xl transition-all border-2 ${selectedTask === t ? `${getTaskColor(t)} text-white shadow-lg ring-4 ring-indigo-50` : 'border-slate-50 bg-slate-50/50 hover:bg-slate-50'}`}><span className="text-sm font-black truncate pr-6">{t}</span><div className={`w-2 h-2 rounded-full ${selectedTask === t ? 'bg-white animate-pulse' : getTaskColor(t)} shadow-sm`} /></button>))}</div>
+            <div className="flex items-center justify-between font-black text-slate-400"><h2 className="text-[10px] uppercase tracking-widest">業務選択</h2><button onClick={() => setShowAddTask(!showAddTask)} className="text-slate-400 hover:text-indigo-600"><Plus size={18}/></button></div>
+            {showAddTask && (<div className="p-4 bg-indigo-50 rounded-2xl border-2 border-indigo-100 mb-4 animate-in slide-in-from-top-2 text-slate-900"><input autoFocus type="text" placeholder="業務名..." value={newTaskInput} onChange={(e) => setNewTaskInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (async () => { if(!newTaskInput.trim()) return; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tasks'), { list: [...tasks, newTaskInput.trim()] }); setNewTaskInput(""); setShowAddTask(false); })()} className="w-full p-3 rounded-xl border-none outline-none text-xs font-bold mb-3 shadow-inner text-slate-900 bg-white" /><div className="flex gap-2"><button onClick={() => setShowAddTask(false)} className="flex-1 text-[10px] font-black text-slate-400">閉じる</button><button onClick={async () => { if(!newTaskInput.trim()) return; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'tasks'), { list: [...tasks, newTaskInput.trim()] }); setNewTaskInput(""); setShowAddTask(false); }} className="flex-[2] py-2 bg-indigo-600 text-white text-[10px] rounded-lg font-bold">追加</button></div></div>)}
+            <div className="space-y-2 text-slate-800">{tasks.map(t => (<button key={t} onClick={() => setSelectedTask(t)} className={`w-full flex items-center justify-between p-4 rounded-xl transition-all border-2 ${selectedTask === t ? `${getTaskColor(t)} text-white shadow-lg ring-4 ring-indigo-50` : 'border-slate-50 bg-slate-50/50 hover:bg-slate-50'}`}><span className="text-sm font-black truncate pr-6">{t}</span><div className={`w-2 h-2 rounded-full ${selectedTask === t ? 'bg-white animate-pulse' : getTaskColor(t)} shadow-sm`} /></button>))}</div>
           </aside>
         )}
 
-        <div className="flex-1 overflow-auto p-8 bg-slate-50/50">
+        <div className="flex-1 overflow-auto p-8 bg-slate-50/50 text-slate-800">
           <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 min-w-max overflow-hidden relative text-slate-800">
-            <table className="w-full border-collapse"><thead className="bg-slate-50 border-b"><tr><th className="sticky left-0 z-40 bg-slate-50 p-8 text-left border-r w-64 text-[10px] text-slate-400 font-black uppercase tracking-widest">Attendance</th>{dates.map(d => { const dt = new Date(d); return (<th key={d} className="p-6 border-r min-w-[220px] text-center text-slate-800"><div className="text-[10px] text-slate-400 uppercase mb-1 font-black">{dt.toLocaleDateString('ja-JP', { weekday: 'short' })}</div><div className={`text-2xl font-black ${dt.getDay() === 0 ? 'text-rose-500' : dt.getDay() === 6 ? 'text-sky-500' : 'text-slate-800'}`}>{dt.getDate()}</div></th>); })}</tr></thead>
+            <table className="w-full border-collapse"><thead className="bg-slate-50 border-b"><tr><th className="sticky left-0 z-40 bg-slate-50 p-8 text-left border-r w-64 text-[10px] text-slate-400 font-black uppercase tracking-widest shadow-sm">Attendance</th>{dates.map(d => { const dt = new Date(d); return (<th key={d} className="p-6 border-r min-w-[220px] text-center text-slate-800"><div className="text-[10px] text-slate-400 uppercase mb-1 font-black">{dt.toLocaleDateString('ja-JP', { weekday: 'short' })}</div><div className={`text-2xl font-black ${dt.getDay() === 0 ? 'text-rose-500' : dt.getDay() === 6 ? 'text-sky-500' : 'text-slate-800'}`}>{dt.getDate()}</div></th>); })}</tr></thead>
               <tbody>{STAFF_LIST.map(staff => { const isMy = currentUserProfile?.id === staff.id; if (userRole === 'staff' && !isMy) return null; return (<tr key={staff.id} className="border-b border-slate-50 group text-slate-800">
                 <td className="sticky left-0 z-30 bg-white p-6 border-r group-hover:bg-slate-50 transition-colors shadow-sm text-slate-800"><div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg ${isMy ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-slate-100 text-slate-400'}`}>{staff.name[0]}</div><div className="flex flex-col text-slate-800"><span className="text-sm font-black text-slate-800">{staff.name}</span>{isMy && <span className="text-[8px] font-black text-indigo-500 uppercase tracking-tighter">Owner</span>}</div></div></td>
                 {dates.map(d => {
                   const key = getCellKey(staff.id, d);
                   const avail = availability[key];
+                  // 安全なレンダリングのための型ガード（React child error 対策）
                   const assign = (assignments[key] && typeof assignments[key].task === 'string') ? assignments[key].task : "";
                   const canEdit = userRole === 'manager' || isMy;
                   const isS = !!(dragStart && dragCurrent && getAffectedKeys().includes(key));
-                  return (<td key={d} onMouseDown={() => handleDragStart(staff.id, d)} onMouseEnter={() => isDragging && setDragCurrent({ sid: staff.id, d })} onClick={() => canEdit && (userRole === 'manager' ? saveAssign(staff.id, d, assign === selectedTask ? "" : selectedTask) : setEditingCell({ staffId: staff.id, d, mode: 'avail' }))} className={`relative p-4 h-32 border-r border-slate-50 transition-all cursor-pointer ${isS ? 'bg-indigo-50' : 'hover:bg-slate-50/50'}`}><div className={`absolute top-4 right-4 p-1.5 rounded-lg border transition-all shadow-sm ${avail?.type === 'ok' ? 'bg-green-100 text-green-700 border-green-200' : avail?.type === 'ng' ? 'bg-red-100 text-red-700 border-red-200' : ''}`}>{avail?.type === 'ok' ? <CheckCircle2 size={14}/> : avail?.type === 'ng' ? <XCircle size={14}/> : null}</div><div className="w-full h-full flex flex-col justify-center items-center gap-3 font-black text-slate-800">{assign && <div className={`w-full py-2.5 px-3 ${getTaskColor(assign)} text-white text-[11px] rounded-xl shadow-md truncate animate-in zoom-in`}>{assign}</div>}</div>{canEdit && (<button onClick={(e) => { e.stopPropagation(); setEditingCell({ sid: staff.id, d, mode: 'memo' }); setTempInput(avail?.memo || ""); }} className="absolute bottom-2 right-2 p-1.5 text-slate-200 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all"><Edit3 size={14}/></button>)}{editingCell?.sid === staff.id && editingCell?.d === d && (<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] bg-white p-6 flex flex-col gap-4 rounded-[2rem] shadow-2xl border border-indigo-100 w-[260px]" onClick={e => e.stopPropagation()}>{editingCell.mode === 'avail' ? (<div className="flex flex-col gap-2 font-black text-slate-800"><div className="text-[10px] uppercase text-slate-400 text-center mb-1">Status</div><button onClick={() => saveAvail(staff.id, d, { type: 'ok' })} className="py-3 bg-green-500 text-white rounded-xl shadow-lg">○ 全日可能</button><button onClick={() => saveAvail(staff.id, d, { type: 'ng' })} className="py-3 bg-rose-500 text-white rounded-xl shadow-lg">× 終日不可</button><button onClick={() => setEditingCell({ ...editingCell, mode: 'memo' })} className="py-3 bg-slate-100 rounded-xl text-slate-600 font-bold">メモ</button><div className="flex gap-2 mt-2"><button onClick={() => saveAvail(staff.id, d, { type: null, memo: "" })} className="flex-1 border-2 text-[10px] rounded-xl py-2 font-bold text-slate-400">RESET</button><button onClick={() => setEditingCell(null)} className="p-2 bg-slate-100 rounded-xl text-slate-400"><X size={20}/></button></div></div>) : (<div className="flex flex-col h-full"><div className="flex items-center gap-2 mb-4 font-black text-slate-400"><MessageSquare size={18} className="text-indigo-600"/><label className="text-[10px] uppercase">MEMO</label></div><textarea autoFocus value={tempInput} onChange={(e) => setTempInput(e.target.value)} className="flex-1 w-full p-4 bg-slate-50 border-2 rounded-[1.5rem] outline-none text-[12px] font-bold mb-4 shadow-inner text-slate-800" /><div className="flex gap-3"><button onClick={() => setEditingCell({ ...editingCell, mode: 'avail' })} className="p-3 bg-slate-100 rounded-xl text-slate-400"><ChevronLeft size={20}/></button><button onClick={() => { saveAvail(staff.id, d, { memo: tempInput }); setTempInput(""); }} className="flex-1 py-3 bg-indigo-600 text-white font-black rounded-xl shadow-lg">保存</button></div></div>)}</div>)}</td>); })}</tr>); })}</tbody>
+                  return (<td key={d} onMouseDown={() => handleDragStart(staff.id, d)} onMouseEnter={() => isDragging && setDragCurrent({ sid: staff.id, d })} onClick={() => canEdit && (userRole === 'manager' ? saveAssign(staff.id, d, assign === selectedTask ? "" : selectedTask) : setEditingCell({ sid: staff.id, d, mode: 'avail' }))} className={`relative p-4 h-32 border-r border-slate-50 transition-all cursor-pointer ${isS ? 'bg-indigo-50' : 'hover:bg-slate-50/50'}`}><div className={`absolute top-4 right-4 p-1.5 rounded-lg border transition-all shadow-sm ${avail?.type === 'ok' ? 'bg-green-100 text-green-700 border-green-200' : avail?.type === 'ng' ? 'bg-red-100 text-red-700 border-red-200' : ''}`}>{avail?.type === 'ok' ? <CheckCircle2 size={14}/> : avail?.type === 'ng' ? <XCircle size={14}/> : null}</div><div className="w-full h-full flex flex-col justify-center items-center gap-3 font-black text-slate-800">{assign && <div className={`w-full py-2.5 px-3 ${getTaskColor(assign)} text-white text-[11px] rounded-xl shadow-md truncate animate-in zoom-in`}>{assign}</div>}</div>{canEdit && (<button onClick={(e) => { e.stopPropagation(); setEditingCell({ sid: staff.id, d, mode: 'memo' }); setTempInput(avail?.memo || ""); }} className="absolute bottom-2 right-2 p-1.5 text-slate-200 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-all"><Edit3 size={14}/></button>)}{editingCell?.sid === staff.id && editingCell?.d === d && (<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] bg-white p-6 flex flex-col gap-4 rounded-[2rem] shadow-2xl border border-indigo-100 w-[260px] text-slate-800" onClick={e => e.stopPropagation()}>{editingCell.mode === 'avail' ? (<div className="flex flex-col gap-2 font-black text-slate-800"><div className="text-[10px] uppercase text-slate-400 text-center mb-1">Status</div><button onClick={() => saveAvail(staff.id, d, { type: 'ok' })} className="py-3 bg-green-500 text-white rounded-xl shadow-lg">○ 全日可能</button><button onClick={() => saveAvail(staff.id, d, { type: 'ng' })} className="py-3 bg-rose-500 text-white rounded-xl shadow-lg">× 終日不可</button><button onClick={() => setEditingCell({ ...editingCell, mode: 'memo' })} className="py-3 bg-slate-100 rounded-xl text-slate-600 font-bold">メモ</button><div className="flex gap-2 mt-2"><button onClick={() => saveAvail(staff.id, d, { type: null, memo: "" })} className="flex-1 border-2 text-[10px] rounded-xl py-2 font-bold text-slate-400">RESET</button><button onClick={() => setEditingCell(null)} className="p-2 bg-slate-100 rounded-xl text-slate-400"><X size={20}/></button></div></div>) : (<div className="flex flex-col h-full text-slate-800"><div className="flex items-center gap-2 mb-4 font-black text-slate-400"><MessageSquare size={18} className="text-indigo-600"/><label className="text-[10px] uppercase">MEMO</label></div><textarea autoFocus value={tempInput} onChange={(e) => setTempInput(e.target.value)} className="flex-1 w-full p-4 bg-slate-50 border-2 rounded-[1.5rem] outline-none text-[12px] font-bold mb-4 shadow-inner text-slate-800 bg-white" /><div className="flex gap-3"><button onClick={() => setEditingCell({ ...editingCell, mode: 'avail' })} className="p-3 bg-slate-100 rounded-xl text-slate-400"><ChevronLeft size={20}/></button><button onClick={() => { saveAvail(staff.id, d, { memo: tempInput }); setTempInput(""); }} className="flex-1 py-3 bg-indigo-600 text-white font-black rounded-xl shadow-lg">保存</button></div></div>)}</div>)}</td>); })}</tr>); })}</tbody>
             </table>
           </div>
         </div>
